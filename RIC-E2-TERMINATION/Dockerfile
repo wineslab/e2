@@ -65,8 +65,9 @@ RUN mv /opt/e2/RIC-E2-TERMINATION/CMakeLists.txt /opt/e2/ && cat /opt/e2/RIC-E2-
     && cd /opt/e2/RIC-E2-TERMINATION/3rdparty && git clone https://github.com/jarro2783/cxxopts.git \
     && cd /opt/e2/RIC-E2-TERMINATION/3rdparty && git clone https://github.com/Tencent/rapidjson.git \
     && cd /opt/e2/RIC-E2-TERMINATION/3rdparty && git clone https://github.com/zeux/pugixml.git \
-    && cd /opt/e2/ && git clone https://github.com/bilke/cmake-modules.git \
-    && cd /opt/e2/ && /usr/bin/cmake -D CMAKE_BUILD_TYPE=$BUILD_TYPE . && make \
+    && cd /opt/e2/ && git clone https://github.com/bilke/cmake-modules.git
+
+RUN cd /opt/e2/ && /usr/bin/cmake -D CMAKE_BUILD_TYPE=$BUILD_TYPE . && make \
     && echo "3" > /opt/e2/rmr.verbose
 
 
@@ -125,7 +126,7 @@ COPY --from=ubuntu /usr/lib/x86_64-linux-gnu/libboost_log_setup.so.1.71.0 /usr/l
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ='Asia/Kolkata'
-RUN apt-get install -y libboost-all-dev
+RUN apt-get update && apt-get install -y libboost-all-dev
 
 COPY --from=ubuntu /usr/lib/x86_64-linux-gnu/libboost_log.so /usr/lib/libboost_log.so
 COPY --from=ubuntu /usr/lib/x86_64-linux-gnu/libboost_log.so.1.71.0 /usr/lib/libboost_log.so.1.71.0
