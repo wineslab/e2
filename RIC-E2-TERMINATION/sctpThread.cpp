@@ -2114,7 +2114,10 @@ void asnInitiatingRequest(E2AP_PDU_t *pdu,
                                        (unsigned char *)message.message.enodbName,
                                        strlen(message.message.enodbName));
                         rmrMessageBuffer.sendMessage->state = 0;
-                        rmrMessageBuffer.sendMessage->sub_id = (int)ie->value.choice.RICrequestID.ricInstanceID;
+                        // the following line is default
+                        //rmrMessageBuffer.sendMessage->sub_id = (int)ie->value.choice.RICrequestID.ricInstanceID;
+                        // EUGENIO MORO: set sub_id to requestor id 
+                        rmrMessageBuffer.sendMessage->sub_id = ie->value.choice.RICrequestID.ricRequestorID; 
 
                         //ie->value.choice.RICrequestID.ricInstanceID;
                         if (mdclog_level_get() >= MDCLOG_DEBUG) {
@@ -2170,6 +2173,7 @@ void asnSuccessfulMsg(E2AP_PDU_t *pdu,
     if (logLevel >= MDCLOG_INFO) {
         mdclog_write(MDCLOG_INFO, "Successful Outcome %ld", procedureCode);
     }
+    printf("successful outcome code %ld\n", procedureCode);
     switch (procedureCode) {
         case ProcedureCode_id_Reset: {
             if (logLevel >= MDCLOG_DEBUG) {
@@ -2209,8 +2213,9 @@ void asnSuccessfulMsg(E2AP_PDU_t *pdu,
                     if (ie->value.present == RICcontrolAcknowledge_IEs__value_PR_RICrequestID) {
                         message.message.messageType = rmrMessageBuffer.sendMessage->mtype = RIC_CONTROL_ACK;
                         rmrMessageBuffer.sendMessage->state = 0;
-//                        rmrMessageBuffer.sendMessage->sub_id = (int) ie->value.choice.RICrequestID.ricRequestorID;
-                        rmrMessageBuffer.sendMessage->sub_id = (int)ie->value.choice.RICrequestID.ricInstanceID;
+                        
+                        rmrMessageBuffer.sendMessage->sub_id = ie->value.choice.RICrequestID.ricRequestorID;
+                        //rmrMessageBuffer.sendMessage->sub_id = (int)ie->value.choice.RICrequestID.ricInstanceID;
 
                         static unsigned char tx[32];
                         snprintf((char *) tx, sizeof tx, "%15ld", transactionCounter++);
@@ -2240,9 +2245,16 @@ void asnSuccessfulMsg(E2AP_PDU_t *pdu,
             break;
         }
         case ProcedureCode_id_RICsubscription: {
-            if (logLevel >= MDCLOG_DEBUG) {
-                mdclog_write(MDCLOG_DEBUG, "Got RICsubscription %s", message.message.enodbName);
+            printf("this is a ric subscription case\n");
+            if (true) {
+                mdclog_write(MDCLOG_ERR, "Got RICsubscription %s", message.message.enodbName);
             }
+
+
+            // EUGENIO MORO: bypass sub manager 
+            RICsubscriptionResponse_IEs_t *ie = pdu->choice.successfulOutcome->value.choice.RICsubscriptionResponse.protocolIEs.list.array[0];
+            rmrMessageBuffer.sendMessage->sub_id = ie->value.choice.RICrequestID.ricInstanceID;
+            printf("ric instance id: %d\n",(int)ie->value.choice.RICrequestID.ricInstanceID);
 #if !(defined(UNIT_TEST) || defined(MODULE_TEST))            
             message.peerInfo->counters[IN_SUCC][MSG_COUNTER][ProcedureCode_id_RICsubscription]->Increment();
             message.peerInfo->counters[IN_SUCC][BYTES_COUNTER][ProcedureCode_id_RICsubscription]->Increment((double)message.message.asnLength);
@@ -2578,6 +2590,8 @@ int receiveXappMessages(Sctp_Map_t *sctpMap,
     break;
 #endif    
                 mdclog_write(MDCLOG_ERR, "Failed to send message no CU entry %s", message.message.enodbName);
+                printf("printing the sctp map:\n");
+                sctpMap->printMap();
                 return -1;
         }
     }
@@ -3152,7 +3166,7 @@ string translateRmrErrorMessages(int state) {
             str = "RMR_ERR_BADARG - argument passed to function was unusable";
             break;
         case RMR_ERR_NOENDPT:
-            str = "RMR_ERR_NOENDPT - send//call could not find an endpoint based on msg type";
+            str = "RMR_ERR_NOENDPT - send//call could not find an endpoint based on message type";
             break;
         case RMR_ERR_EMPTY:
             str = "RMR_ERR_EMPTY - msg received had no payload; attempt to send an empty message";

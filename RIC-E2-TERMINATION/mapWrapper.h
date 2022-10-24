@@ -68,6 +68,13 @@ public:
         }
     }
 
+    void printMap(){
+        std::shared_lock<std::shared_timed_mutex> read(fence);
+        for (auto it = keyMap.cbegin(); it != keyMap.cend(); ++it) {
+            std::cout << "{" << (*it).first << ": " << (*it).second << "}\n";
+        }
+    }
+
 private:
     std::unordered_map<std::string, void *> keyMap;
     std::shared_timed_mutex fence;
