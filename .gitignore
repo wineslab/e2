@@ -1,3 +1,5 @@
+.vscode/
+
 e2/cmake-build-debug/CMakeFiles
 e2/.idea/*
 e2/.idea
